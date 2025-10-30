@@ -131,7 +131,7 @@ python api.py
 ---
 
 ## Preview
-![Dashboard Screenshot](static/resources/screenshot.png)
+![Dashboard Screenshot](app/static/resources/screenshot.png)
 
 ---
 
