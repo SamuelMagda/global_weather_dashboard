@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Global Weather Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Rubik', 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+      color: #fff;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 25px;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .info {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 35px;
+      background: rgba(5, 30, 70, 0.55);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 18px 50px;
+      border-radius: 16px;
+      margin-bottom: 40px;
+      font-size: 1.1rem;
+      width: 750px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .info strong {
+      color: #f0f5ff;
+    }
+
+    #weather-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      width: 100%;
+    }
+
+    .country-card {
+      width: 760px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(40, 85, 155, 0.9), rgba(70, 125, 200, 0.9));
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .country-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .country-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background: linear-gradient(90deg, rgba(10, 45, 110, 0.95), rgba(25, 70, 145, 0.95));
+      font-weight: 600;
+      font-size: 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .country-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .flag-icon {
+      width: 30px;
+      height: 22px;
+      border-radius: 3px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.3);
+      transform: translateY(1px);
+    }
+
+    .country-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-weight: 500;
+      font-size: 1rem;
+      color: #d8e6ff;
+    }
+
+    .sun {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: #ffeeb8;
+    }
+
+    .sun img {
+      width: 28px;
+      height: 28px;
+      vertical-align: middle;
+      opacity: 0.95;
+    }
+
+    .localtime {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #ffffff;
+    }
+
+    .city-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    .city-table th {
+      color: #dcecff;
+      font-weight: 500;
+      padding: 13px 0;
+      font-size: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      background: linear-gradient(90deg, rgba(30, 75, 150, 0.55), rgba(25, 70, 130, 0.55));
+    }
+
+    .city-table td {
+      padding: 15px 0;
+      font-size: 1.05rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .city-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .city-table tr:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Global Weather Dashboard</h1>
+
+  <div class="info" id="server-info">
+    <span><strong>Date:</strong> {{ current_date }}</span>
+    <span><strong>Server Time:</strong> {{ server_time }}</span>
+    <span><strong>Server Location:</strong> {{ server_location }}</span>
+  </div>
+
+  <div id="weather-container"></div>
+
+<script>
+const ISO_MAP = {
+  "Belgium": "BE", "France": "FR", "Germany": "DE", "Ireland": "IE",
+  "Italy": "IT", "Netherlands": "NL", "Portugal": "PT", "Spain": "ES",
+  "Switzerland": "CH", "United Kingdom": "GB", "Romania": "RO"
+};
+
+function getFlagUrlFromISO(iso) {
+  const codePoints = [...iso.toUpperCase()].map(c => 127397 + c.charCodeAt(0))
+      .map(cp => cp.toString(16)).join('-');
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codePoints}.svg`;
+}
+
+let countryTimezones = {}, serverTimeOffset = 0, lastServerTime = null, serverTimer = null;
+
+async function refreshWeather() {
+  try {
+    const res = await fetch("/api/weather");
+    const data = await res.json();
+    const grouped = {};
+
+    for (const r of data) {
+      if (!grouped[r.country]) grouped[r.country] = { flag: r.flag, tz: r.tz, iso: ISO_MAP[r.country] || "UN", cities: [] };
+      grouped[r.country].cities.push(r);
+    }
+
+    const container = document.getElementById("weather-container");
+    countryTimezones = {};
+
+    container.innerHTML = Object.entries(grouped).map(([country, info]) => {
+      countryTimezones[country] = info.tz;
+      const flagUrl = getFlagUrlFromISO(info.iso);
+      const sunriseIcon = `<img src="/static/resources/sunrise.png" alt="Sunrise">`;
+      const sunsetIcon  = `<img src="/static/resources/sunset.png" alt="Sunset">`;
+
+      const rows = info.cities.map(c => `
+        <tr>
+          <td>${c.city}</td>
+          <td>${c.temp?.toFixed(1) ?? "--"}°C</td>
+          <td>${c.wind?.toFixed(1) ?? "--"} km/h</td>
+          <td>${c.humidity ? c.humidity.toFixed(0) + "%" : "--"}</td>
+          <td>${c.feels_like?.toFixed(1) ?? "--"}°C</td>
+        </tr>`).join("");
+
+      return `
+        <div class="country-card">
+          <div class="country-header">
+            <div class="country-left">
+              <img class="flag-icon" src="${flagUrl}" alt="${info.iso}">
+              ${country}
+            </div>
+            <div class="country-right">
+              <span class="sun">${sunriseIcon} ${info.cities[0].sunrise?.slice(11,16) || "--:--"}</span>
+              <span class="sun">${sunsetIcon} ${info.cities[0].sunset?.slice(11,16) || "--:--"}</span>
+              <span class="localtime" id="local-${country.replace(/ /g,'_')}">Local Time: --:--</span>
+            </div>
+          </div>
+          <table class="city-table">
+            <thead><tr><th>City</th><th>Temp</th><th>Wind</th><th>Humidity</th><th>Feels Like</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }).join("");
+
+    updateLocalTimes();
+  } catch (e) {
+    console.warn("Weather refresh failed:", e);
+  }
+}
+
+function updateLocalTimes() {
+  const now = new Date(Date.now() + serverTimeOffset);
+  for (const [country, tz] of Object.entries(countryTimezones)) {
+    const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+    const el = document.getElementById(`local-${country.replace(/ /g,'_')}`);
+    if (el) el.textContent = `Local Time: ${time}`;
+  }
+}
+
+async function syncServerClock() {
+  try {
+    const r = await fetch("/api/time");
+    const t = await r.json();
+    const serverNow = new Date(`${t.date} ${t.time}`);
+    serverTimeOffset = serverNow - new Date();
+    lastServerTime = serverNow;
+    updateServerClockDisplay();
+
+    if (serverTimer) clearInterval(serverTimer);
+    serverTimer = setInterval(() => {
+      lastServerTime = new Date(lastServerTime.getTime() + 1000);
+      updateServerClockDisplay();
+    }, 1000);
+  } catch (err) {
+    console.warn("Server clock sync failed:", err);
+  }
+}
+
+function updateServerClockDisplay() {
+  const info = document.getElementById("server-info");
+  if (!lastServerTime) return;
+  const date = lastServerTime.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+  const time = lastServerTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  info.innerHTML = `
+    <span><strong>Date:</strong> ${date}</span>
+    <span><strong>Server Time:</strong> ${time}</span>
+    <span><strong>Server Location:</strong> Munich</span>`;
+}
+
+setInterval(refreshWeather, 15 * 60 * 1000);
+setInterval(updateLocalTimes, 60 * 1000);
+setInterval(syncServerClock, 10 * 60 * 1000);
+
+refreshWeather();
+syncServerClock();
+</script>
+</body>
+</html>

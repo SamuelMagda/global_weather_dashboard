@@ -1,0 +1,14 @@
+{
+  "Belgium":        {"flag": "BE", "tz": "Europe/Brussels"},
+  "France":         {"flag": "FR", "tz": "Europe/Paris"},
+  "Germany":        {"flag": "DE", "tz": "Europe/Berlin"},
+  "Ireland":        {"flag": "IE", "tz": "Europe/Dublin"},
+  "Italy":          {"flag": "IT", "tz": "Europe/Rome"},
+  "Netherlands":    {"flag": "NL", "tz": "Europe/Amsterdam"},
+  "Poland":         {"flag": "PL", "tz": "Europe/Warsaw"},
+  "Portugal":       {"flag": "PT", "tz": "Europe/Lisbon"},
+  "Spain":          {"flag": "ES", "tz": "Europe/Madrid"},
+  "Switzerland":    {"flag": "CH", "tz": "Europe/Zurich"},
+  "United Kingdom": {"flag": "GB", "tz": "Europe/London"},
+  "Romania":        {"flag": "RO", "tz": "Europe/Bucharest"}
+}
