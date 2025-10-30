@@ -31,27 +31,26 @@ It grew into a small, self-contained **global weather dashboard** — everything
 ## Project Structure
 
 ```bash
-data_automation/
- └── global_weather_dashboard/
-      ├── app/
-      │    ├── static/
-      │    │    └── resources/
-      │    │         ├── screenshot.png
-      │    │         ├── sunrise.png
-      │    │         ├── sunset.png
-      │    │         └── countries.json
-      │    ├── templates/
-      │    │    └── index.html
-      │    ├── api.py             # Flask app (frontend + API endpoints)
-      │    ├── collector.py       # Background data collector (6h interval)
-      │    ├── config.py          # City list and Open-Meteo setup
-      │    ├── db.py              # SQLite connection helper
-      │    ├── README.md
-      │    └── requirements.txt
-      └── data/
-           └── telemetry.db
-```
-
+global_weather_dashboard/
+ ├── app/
+ │    ├── static/
+ │    │    └── resources/
+ │    │         ├── screenshot.png
+ │    │         ├── sunrise.png
+ │    │         ├── sunset.png
+ │    │         └── countries.json
+ │    ├── templates/
+ │    │    └── index.html
+ │    ├── api.py             # Flask app (frontend + API endpoints)
+ │    ├── collector.py       # Background data collector (6h interval)
+ │    ├── config.py          # City list and Open-Meteo setup
+ │    ├── db.py              # SQLite connection helper
+ │    └── requirements.txt
+ ├── data/
+ │    └── telemetry.db
+ └── README.md
+ ```
+ 
 ---
 
 ## Requirements
